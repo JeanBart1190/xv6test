@@ -102,6 +102,9 @@ allocproc(void)
       release(&p->lock);
     }
   }
+
+  p->syscall_trace = 0;
+
   return 0;
 
 found:
@@ -290,6 +293,9 @@ fork(void)
   np->cwd = idup(p->cwd);
 
   safestrcpy(np->name, p->name, sizeof(p->name));
+
+  //将trace_mask拷贝到子进程
+  np->syscall_trace = p->syscall_trace;
 
   pid = np->pid;
 
@@ -692,4 +698,26 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+uint64
+count_proc(void){
+  struct proc *p;
+  // counting the number of processes
+  uint64 num = 0;
+  // traverse all processes
+  for (p = proc; p < &proc[NPROC]; p++)
+  {
+    // add lock
+    acquire(&p->lock);
+    // if the processes's state is not UNUSED
+    if (p->state != UNUSED)
+    {
+      // the num add one
+      num++;
+    }
+    // release lock
+    release(&p->lock);
+  }
+  return num;
 }
